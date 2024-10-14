@@ -35,7 +35,7 @@ except Exception as e:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@celery.task(queue='scan')
+@celery.task(name='tasks.tasks.perform_scan', queue='scan')
 def perform_scan(target, userUID):
     current_scan = db['currentRunningScan']
 
@@ -161,7 +161,7 @@ def perform_scan(target, userUID):
         )
 
 
-@celery.task(queue='basic')
+@celery.task(name='tasks.tasks.perform_network_tool',queue='basic')
 def perform_network_tool(target, tool, userUID):
     collection = db[userUID]["basic"]
     current_scan = db['currentRunningScan']  # Define currentRunningScan upfront for the finally block
@@ -428,7 +428,7 @@ def perform_whatweb(target, userUID=None):
 
 
 
-@celery.task(queue='sublist3r')
+@celery.task(name='tasks.tasks.perform_sublist3r',queue='sublist3r')
 def perform_sublist3r(data, userUID=None):
     collection = None
     current_scan = db['currentRunningScan']
