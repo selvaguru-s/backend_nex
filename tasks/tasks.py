@@ -20,7 +20,7 @@ escaped_password = quote_plus(password)
 # Initialize Celery with Redis as the broker
 celery = Celery(
     __name__,
-    broker='redis://localhost:7000/0', include=['proj.tasks']
+    broker='redis://localhost:7000/0'
 )
 
 # Initialize MongoDB client
