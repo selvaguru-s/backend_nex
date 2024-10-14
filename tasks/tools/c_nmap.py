@@ -5,7 +5,7 @@ import re
 import logging
 import psutil
 import time
-from tasks.celery_app import celery
+from celery_app import celery
 from utils.mongo import db
 from utils.user_scan_count import store_user_scancount_in_mongo 
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 
-@celery.task(queue='scan')
+@celery.task(name='tasks.tools.c_nmap.perform_scan', queue='scan')
 def perform_scan(target, userUID):
     current_scan = db['currentRunningScan']
 
