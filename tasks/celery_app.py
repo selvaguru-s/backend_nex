@@ -5,10 +5,12 @@ def make_celery():
     celery = Celery(
         __name__,
         broker='redis://localhost:7000/0',
-        include=['tasks.tools.c_nmap'],
-        include=['tasks.tools.c_networktools'],
-        include=['tasks.tools.c_whatweb'] ,
-        include=['tasks.tools.c_sublist3r']  # Include the module where your tasks are located
+        include=[
+            'tasks.tools.c_nmap',
+            'tasks.tools.c_networktools',
+            'tasks.tools.c_whatweb',
+            'tasks.tools.c_sublist3r'  # Include the modules where your tasks are located
+        ]
     )
 
     # You can add more configuration here if needed
