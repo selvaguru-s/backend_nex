@@ -1,4 +1,3 @@
-import datetime
 import logging
 from flask import Blueprint, jsonify, request
 from auth.auth_decorator import token_required
@@ -6,6 +5,8 @@ from utils.cors_helpers import build_cors_preflight_response
 from utils.decorators import check_running_scan, validate_target
 from tasks.tasks import perform_whatweb
 from utils.mongo import db 
+import datetime
+from datetime import datetime, timezone
 
 whatweb_bp = Blueprint('whatweb', __name__)
 
@@ -29,8 +30,8 @@ def whatweb(userUID=None):
         task = perform_whatweb.apply_async(args=[target,  userUID])
         task_id = task.id  # Store the task ID for later use
 
-        # Get current date and time in UTC (aware)
-        scan_datetime = datetime.now(datetime.timezone.utc)
+    # Get current date and time in UTC (aware)
+        scan_datetime = datetime.now(timezone.utc)
 
         # Access collection for storing scan data
         collection = db[userUID]["whatweb"]   # Collection named after userUID
