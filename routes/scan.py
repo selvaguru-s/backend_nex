@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from auth.auth_decorator import token_required
 from utils.cors_helpers import build_cors_preflight_response
 from utils.decorators import validate_target, check_running_scan
-from tasks.tools import perform_scan
+from tasks.tools.c_nmap import perform_scan
 import datetime
 from datetime import datetime, timezone
 from utils.mongo import db 
