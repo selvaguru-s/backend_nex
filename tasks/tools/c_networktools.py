@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-@celery.task(name='tasks.tools.perform_network_tool',queue='basic')
+@celery.task(name='tasks.tools.c_networktools',queue='basic')
 def perform_network_tool(target, tool, userUID):
     collection = db[userUID]["basic"]
     current_scan = db['currentRunningScan']  # Define currentRunningScan upfront for the finally block

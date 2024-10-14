@@ -11,6 +11,9 @@ def make_celery():
     celery.conf.update(
         task_routes={
             'tasks.tools.c_nmap.perform_scan': {'queue': 'scan'},
+            'tasks.tools.c_whatweb.perform_whatweb':{'queue':'whatweb'},
+            'tasks.tools.c_networktools.perform_network_tool':{'queue':'basic'},
+            'tasks.tools.c_sublist3r.perform_sublist3r':{'queue':'sublist3r'}
             
         }
     )

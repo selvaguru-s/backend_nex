@@ -14,7 +14,7 @@ from utils.user_scan_count import store_user_scancount_in_mongo
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@celery.task(name='tasks.tasks.perform_whatweb',queue='whatweb')
+@celery.task(name='tasks.tasks.c_whatweb',queue='whatweb')
 def perform_whatweb(target, userUID=None):
     collection = None
     current_scan = db['currentRunningScan']

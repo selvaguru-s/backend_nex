@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 
-@celery.task(name='tasks.tools.perform_scan', queue='scan')
+@celery.task(name='tasks.tools.c_nmap', queue='scan')
 def perform_scan(target, userUID):
     current_scan = db['currentRunningScan']
 
