@@ -1,5 +1,5 @@
 import datetime
-from time import timezone
+from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from auth.auth_decorator import token_required
 from utils.cors_helpers import build_cors_preflight_response
