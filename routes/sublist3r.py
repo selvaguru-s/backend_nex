@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from auth.auth_decorator import token_required
 from utils.cors_helpers import build_cors_preflight_response
 from utils.decorators import check_running_scan, validate_target
-from tasks.tasks import perform_sublist3r
+from tasks.tools import perform_sublist3r
 from utils.mongo import db 
 
 sublist3r_bp = Blueprint('sublist3r', __name__)
