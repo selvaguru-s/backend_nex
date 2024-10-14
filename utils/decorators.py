@@ -1,6 +1,6 @@
 from functools import wraps
 from flask import request, jsonify
-
+from utils.mongo import db 
 import re
 
 # Check private IP utility

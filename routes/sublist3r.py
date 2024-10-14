@@ -3,7 +3,7 @@ from time import timezone
 from flask import Blueprint, jsonify, request
 from auth.auth_decorator import token_required
 from utils.cors_helpers import build_cors_preflight_response
-from utils.decorators import validate_target
+from utils.decorators import check_running_scan, validate_target
 from tasks.tasks import perform_sublist3r
 from utils.mongo import db 
 
@@ -12,6 +12,7 @@ sublist3r_bp = Blueprint('sublist3r', __name__)
 @sublist3r_bp.route('/sublist3r', methods=['POST'])
 @token_required
 @validate_target
+@check_running_scan
 def sublist3r(userUID=None):
     if request.method == 'OPTIONS':
         return build_cors_preflight_response()
