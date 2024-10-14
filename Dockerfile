@@ -1,9 +1,9 @@
 # Use Kali Linux as the base image
 FROM kalilinux/kali-rolling
 
-# Install required packages including sudo
+# Install required packages including sudo and supervisord
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip redis-server nmap sublist3r whois traceroute dnsutils sslscan openssl whatweb sudo && \
+    apt-get install -y python3 python3-pip redis-server nmap sublist3r whois traceroute dnsutils sslscan openssl whatweb sudo supervisor && \
     apt-get clean
 
 # Allow running nmap with sudo without password
@@ -25,8 +25,8 @@ RUN pip3 install --break-system-packages -r requirements.txt
 EXPOSE 7000
 EXPOSE 7001
 
-# Command to run the Redis server, Celery worker, and the Python application with sudo
-CMD sudo -E redis-server --port 7000 --daemonize yes && \
-    #sudo -E celery -A tasks worker -Q scan,basic,whatweb,sublist3r --loglevel=info & \
-    sudo -E celery -A tasks.celery_app worker -Q scan,basic,sublist3r,whatweb  --loglevel=info \
-    sudo -E python3 app.py
+# Copy supervisor configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Start supervisord
+CMD ["/usr/bin/supervisord"]
