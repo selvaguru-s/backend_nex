@@ -10,7 +10,8 @@ whatweb_bp = Blueprint('whatweb', __name__)
 
 @whatweb_bp.route('/whatweb', methods=['POST'])
 @token_required
-
+@validate_target
+@check_running_scan
 def whatweb(userUID=None):
     if request.method == 'OPTIONS':
         return build_cors_preflight_response()
