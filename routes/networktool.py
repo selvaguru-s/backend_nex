@@ -3,7 +3,7 @@ import datetime
 from flask import Blueprint, jsonify, request
 from auth.auth_decorator import token_required
 from utils.cors_helpers import build_cors_preflight_response
-from utils.decorators import validate_target
+from utils.decorators import check_running_scan, validate_target
 from tasks.tasks import perform_network_tool
 from utils.mongo import db 
 
@@ -12,6 +12,7 @@ networktool_bp = Blueprint('networktool', __name__)
 @networktool_bp.route('/networktool', methods=['POST'])
 @token_required
 @validate_target
+@check_running_scan
 def networktool(userUID=None):
     if request.method == 'OPTIONS':
         return build_cors_preflight_response()

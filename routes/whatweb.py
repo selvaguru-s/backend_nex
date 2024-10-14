@@ -2,7 +2,7 @@ import datetime
 from flask import Blueprint, jsonify, request
 from auth.auth_decorator import token_required
 from utils.cors_helpers import build_cors_preflight_response
-from utils.decorators import validate_target
+from utils.decorators import check_running_scan, validate_target
 from tasks.tasks import perform_whatweb
 from utils.mongo import db 
 
@@ -11,6 +11,7 @@ whatweb_bp = Blueprint('whatweb', __name__)
 @whatweb_bp.route('/whatweb', methods=['POST'])
 @token_required
 @validate_target
+@check_running_scan
 def whatweb(userUID=None):
     if request.method == 'OPTIONS':
         return build_cors_preflight_response()

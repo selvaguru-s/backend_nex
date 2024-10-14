@@ -1,6 +1,6 @@
 from functools import wraps
 from flask import request, jsonify
-from pymongo import MongoClient
+
 import re
 
 # Check private IP utility
@@ -25,15 +25,30 @@ def validate_target(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Check for running scans decorator
+# Helper function to check current running scans for a user
+def get_current_running_scan(userUID):
+    try:
+        collection = db["currentRunningScan"]
+        query = {"userUID": userUID, "running": True}
+        running_scan = collection.find_one(query)
+        return running_scan  # Returns None if no running scan is found
+    except Exception as e:
+        raise Exception(f"Error fetching running scans: {str(e)}")
+
+
+# Custom decorator to check for running scans
 def check_running_scan(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        userUID = kwargs.get('userUID')
-        client = MongoClient()
-        db = client["celery_nmap"]
-        running_scan = db["currentRunningScan"].find_one({"userUID": userUID, "running": True})
+        userUID = kwargs.get('userUID')  # Get userUID from the token_required decorator
+
+        # Check if there is a running scan for this user
+        running_scan = get_current_running_scan(userUID)
+
         if running_scan:
             return jsonify({'error': 'A scan is already in progress for this user'}), 400
+
+        # Proceed if no running scan is found
         return f(*args, **kwargs)
     return decorated_function
+    
