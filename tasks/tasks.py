@@ -20,7 +20,7 @@ escaped_password = quote_plus(password)
 # Initialize Celery with Redis as the broker
 celery = Celery(
     __name__,
-    broker='redis://localhost:7000/0',
+    broker='redis://localhost:7000/0', include=['proj.tasks']
 )
 
 # Initialize MongoDB client
@@ -289,7 +289,7 @@ def perform_network_tool(target, tool, userUID):
 
 
 
-@celery.task(queue='whatweb')
+@celery.task(name='tasks.tasks.perform_whatweb',queue='whatweb')
 def perform_whatweb(target, userUID=None):
     collection = None
     current_scan = db['currentRunningScan']
