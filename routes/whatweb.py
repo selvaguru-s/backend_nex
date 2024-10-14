@@ -1,13 +1,3 @@
-import datetime
-from flask import Blueprint, jsonify, request
-from auth.auth_decorator import token_required
-from utils.cors_helpers import build_cors_preflight_response
-from utils.decorators import check_running_scan, validate_target
-from tasks.tasks import perform_whatweb
-from utils.mongo import db 
-
-whatweb_bp = Blueprint('whatweb', __name__)
-
 @whatweb_bp.route('/whatweb', methods=['POST'])
 @token_required
 @validate_target
@@ -15,6 +5,7 @@ whatweb_bp = Blueprint('whatweb', __name__)
 def whatweb(userUID=None):
     if request.method == 'OPTIONS':
         return build_cors_preflight_response()
+    
     # Get the request payload
     data = request.json
     # Validate mandatory field "target"
@@ -22,10 +13,9 @@ def whatweb(userUID=None):
     if not target:
         return jsonify({'error': 'Target field is required'}), 400
     
-
     try:
         # Dispatch Celery task with target and tool
-        task = perform_whatweb.apply_async(args=[target,  userUID])
+        task = perform_whatweb.apply_async(args=[target, userUID])
         task_id = task.id  # Store the task ID for later use
 
         # Get current date and time in UTC (aware)
@@ -58,4 +48,5 @@ def whatweb(userUID=None):
         return jsonify({'message': 'Task has been initiated. Results will be available shortly.', 'task_id': task_id}), 202
 
     except Exception as e:
+        logging.error(f"Error in whatweb route: {str(e)}")
         return jsonify({'error': str(e)}), 500
