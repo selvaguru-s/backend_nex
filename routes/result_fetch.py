@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify
 from auth.auth_decorator import token_required
 from utils.mongo import db 
 
-result_dp = Blueprint('usage', __name__)
+result_dp = Blueprint('result', __name__)
 
 @result_dp.route('/results', methods=['GET'])
 @token_required

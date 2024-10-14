@@ -2,7 +2,6 @@ import signal
 import subprocess
 from subprocess import PIPE
 import re
-from gem import analyze_nmap_output
 from celery import Celery
 import logging
 from urllib.parse import quote_plus
