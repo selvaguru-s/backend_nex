@@ -1,0 +1,10 @@
+google-generativeai
+redis
+gem
+celery
+pymongo
+psutil
+flask
+firebase-admin
+flask-cors
+pytz
