@@ -5,7 +5,7 @@ import re
 import logging
 import psutil
 import time
-from tasks.celery_app import celery
+from celery_app import celery
 from utils.mongo import db
 from utils.user_scan_count import store_user_scancount_in_mongo 
 
