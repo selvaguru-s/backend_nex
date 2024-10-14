@@ -28,5 +28,5 @@ EXPOSE 7001
 # Command to run the Redis server, Celery worker, and the Python application with sudo
 CMD sudo -E redis-server --port 7000 --daemonize yes && \
     #sudo -E celery -A tasks worker -Q scan,basic,whatweb,sublist3r --loglevel=info & \
-    sudo -E celery -A tasks.celery_app worker -Q scan,basic,sublist3r,whatweb  --loglevel=info
+    sudo -E celery -A tasks.celery_app worker -Q scan,basic,sublist3r,whatweb  --loglevel=info \
     sudo -E python3 app.py
