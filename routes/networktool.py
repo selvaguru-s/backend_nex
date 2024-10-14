@@ -47,7 +47,7 @@ def networktool(userUID=None):
         }
         collection.insert_one(initial_status)
 
-        # Update or insert document in 'currentRunningScan' collection to track running scans
+        # Update or insert document in 'currentRunningScan' collection to track running scan
         collection2.update_one(
             {"userUID": userUID},  # Find the document where userUID matches
             {"$set": {"running": True}},  # Set 'running' to True
