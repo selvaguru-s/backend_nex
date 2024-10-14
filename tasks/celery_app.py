@@ -5,7 +5,7 @@ def make_celery():
     celery = Celery(
         __name__,
         broker='redis://localhost:7000/0',
-         include=['tools.c_nmap'],
+         
        
     )
     
