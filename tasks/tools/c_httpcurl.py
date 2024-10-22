@@ -62,7 +62,7 @@ def perform_httpcurl(data, userUID=None):
         })
 
         # Prepare the curl command for the body
-        curl_command_body = ['curl', '-s', '-L', '-X', method, target]  # '-s' for silent mode, '-L' to follow redirects
+        curl_command_body = ['curl', '-s', '-L', '-I', '-X', method, target]  # '-s' for silent mode, '-L' to follow redirects
 
         # Handle Authorization header based on selected type
         if auth_type == 'Bearer':
@@ -87,14 +87,10 @@ def perform_httpcurl(data, userUID=None):
         if body and method in ['POST', 'PUT', 'PATCH']:
             curl_command_body.append(f'--data={body}')
 
-        # Prepare the curl command for the headers
-        curl_command_headers = ['curl', '-s', '-I', '-L', target]  # '-I' for headers and '-L' to follow redirects
-
-        # Start the subprocesses
+        # Start the subprocess
         process = subprocess.Popen(curl_command_body, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process2 = subprocess.Popen(curl_command_headers, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # Get the psutil process object for the body command
+        # Get the psutil process object for the command
         ps_process = psutil.Process(process.pid)
 
         # Initialize variables for CPU and memory usage
@@ -102,9 +98,9 @@ def perform_httpcurl(data, userUID=None):
         memory_usage = 0.0  # Total memory usage over all samples
         sample_count = 0  # Number of samples taken
 
-        # Monitor the processes
+        # Monitor the process
         while True:
-            if process.poll() is not None and process2.poll() is not None:
+            if process.poll() is not None:
                 break
 
             # Sample CPU and memory usage
@@ -119,10 +115,6 @@ def perform_httpcurl(data, userUID=None):
         output_body = stdout.decode()
         error_body = stderr.decode()
 
-        stdout2, stderr2 = process2.communicate()
-        output_headers = stdout2.decode()
-        error_headers = stderr2.decode()
-
         # Calculate average CPU and memory usage
         avg_cpu_usage = cpu_usage / sample_count if sample_count > 0 else 0.0
         avg_memory_usage = memory_usage / sample_count / (1024 * 1024) if sample_count > 0 else 0.0
@@ -132,9 +124,9 @@ def perform_httpcurl(data, userUID=None):
 
         # Remove escape sequences from the outputs
         output_body = re.sub(r'\x1b[^m]*m', '', output_body)
-        output_headers = re.sub(r'\x1b[^m]*m', '', output_headers)
+
         print(output_body)
-        print(output_headers)
+     
 
         # Store the results for both body and headers in the database
         # Treat all responses as success for logging purposes
@@ -147,8 +139,8 @@ def perform_httpcurl(data, userUID=None):
                 "Target": target,
                 "Tool": "Curl",
                 "result": {
-                    "body_output": output_body,
-                    "header_output": output_headers,
+                    "output": output_body,
+
                     "avg_cpu_usage": avg_cpu_usage,
                     "avg_memory_usage": avg_memory_usage
                 }
@@ -158,12 +150,7 @@ def perform_httpcurl(data, userUID=None):
         # Update user scan count
         store_user_scancount_in_mongo(userUID)
 
-        return {
-            'body_output': output_body,
-            'header_output': output_headers,
-            'avg_cpu_usage': avg_cpu_usage,
-            'avg_memory_usage': avg_memory_usage
-        }
+
 
     except KeyboardInterrupt:
         logger.info("Scan interrupted by user.")
