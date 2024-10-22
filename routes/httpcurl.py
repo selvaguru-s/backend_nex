@@ -61,5 +61,5 @@ def scan(userUID=None):
         return jsonify({'message': 'Task has been initiated. Results will be available shortly.', 'task_id': task_id}), 202
 
     except Exception as e:
-        logging.error(f"Error in whatweb route: {str(e)}")
+        logging.error(f"Error in httpcurl route: {str(e)}")
         return jsonify({'error': str(e)}), 500
