@@ -9,7 +9,7 @@ def make_celery():
             'tasks.tools.c_nmap',
             'tasks.tools.c_networktools',
             'tasks.tools.c_whatweb',
-            'tasks.tools.c_sublist3r'
+            'tasks.tools.c_sublist3r',
             'tasks.tools.c_httpcurl'  # Include the modules where your tasks are located
         ]
     )
