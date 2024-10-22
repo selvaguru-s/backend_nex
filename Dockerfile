@@ -3,7 +3,7 @@ FROM kalilinux/kali-rolling
 
 # Install required packages including sudo and supervisord
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip redis-server nmap sublist3r whois traceroute dnsutils sslscan openssl whatweb sudo supervisor && \
+    apt-get install -y python3 python3-pip redis-server nmap sublist3r whois traceroute dnsutils sslscan openssl whatweb wget sudo supervisor && \
     apt-get clean
 
 # Allow running nmap with sudo without password
