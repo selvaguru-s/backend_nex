@@ -22,12 +22,9 @@ def perform_httpcurl(data, userUID=None):
     def cleanup(signum, frame):
         current_scan.update_one(
             {"userUID": userUID, "running": True},
-            {
-                "$set": {
-                    "running": False
-                }
-            }
+            {"$set": {"running": False}}
         )
+        logger.info("Cleanup signal received, updating scan status.")
         raise KeyboardInterrupt  # Raise an exception to break the scan loop
 
     # Register the cleanup function for SIGINT (Ctrl+C) and SIGTERM
@@ -59,7 +56,7 @@ def perform_httpcurl(data, userUID=None):
         })
 
         # Prepare the wget command for the body
-        wget_command_body = ['wget', '-q', '-O', '-', '--method', method,'--max-redirect=inf', target]  # '-O -' captures output to stdout
+        wget_command_body = ['wget', '-q', '-O', '-', '--method', method, '--max-redirect=inf', target]
 
         # Handle Authorization header based on selected type
         if auth_type == 'Bearer':
@@ -85,7 +82,7 @@ def perform_httpcurl(data, userUID=None):
             wget_command_body.append(f'--body-data={body}')
 
         # Prepare the wget command for the headers
-        wget_command_headers = ['wget', '-S', '--spider','--max-redirect=inf', '-q', target]  # '-S' gets the headers and '--spider' avoids downloading
+        wget_command_headers = ['wget', '-S', '--spider', '--max-redirect=inf', '-q', target]
 
         # Start the subprocesses
         process = subprocess.Popen(wget_command_body, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -104,11 +101,12 @@ def perform_httpcurl(data, userUID=None):
             if process.poll() is not None and process2.poll() is not None:
                 break
 
-            # Sample CPU and memory usage
-            cpu_usage += ps_process.cpu_percent(interval=0.1)
-            memory_info = ps_process.memory_info()
-            memory_usage += memory_info.rss  # Memory usage in bytes
-            sample_count += 1
+            # Check if the process is still alive before sampling
+            if ps_process.is_running():
+                cpu_usage += ps_process.cpu_percent(interval=0.1)
+                memory_info = ps_process.memory_info()
+                memory_usage += memory_info.rss  # Memory usage in bytes
+                sample_count += 1
             time.sleep(0.1)
 
         # Get final output for both processes
@@ -130,8 +128,9 @@ def perform_httpcurl(data, userUID=None):
         # Remove escape sequences from the outputs
         output_body = re.sub(r'\x1b[^m]*m', '', output_body)
         output_headers = re.sub(r'\x1b[^m]*m', '', output_headers)
-        print(output_body),
+        print(output_body)
         print(output_headers)
+
         # Store the results for both body and headers in the database
         if process.returncode != 0 or process2.returncode != 0:
             logger.error("Curl body or headers command failed")
@@ -175,17 +174,18 @@ def perform_httpcurl(data, userUID=None):
 
     except KeyboardInterrupt:
         logger.info("Scan interrupted by user.")
-        collection.update_one({"task_id": perform_httpcurl.request.id}, {
-            "$set": {
-                "status": "CANCELED",
-                "result": {"error": "Scan was canceled by the user."}
-            }
-        })
+        if collection is not None:
+            collection.update_one({"task_id": perform_httpcurl.request.id}, {
+                "$set": {
+                    "status": "CANCELED",
+                    "result": {"error": "Scan was canceled by the user."}
+                }
+            })
         return {'error': "Scan was canceled by the user."}
 
     except Exception as e:
         logger.error(f"Error occurred during the Curl scan: {e}")
-        if collection:
+        if collection is not None:
             collection.update_one({"task_id": perform_httpcurl.request.id}, {
                 "$set": {
                     "status": "FAILURE",
@@ -198,9 +198,5 @@ def perform_httpcurl(data, userUID=None):
         # Ensure running is set to False no matter what happens
         current_scan.update_one(
             {"userUID": userUID, "running": True},
-            {
-                "$set": {
-                    "running": False
-                }
-            }
+            {"$set": {"running": False}}
         )
