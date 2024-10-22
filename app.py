@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from auth.firebase import init_firebase
+from routes.httpcurl import httpcurl
 from routes.scan import scan_bp
 from routes.networktool import networktool_bp
 from routes.whatweb import whatweb_bp
@@ -31,6 +32,7 @@ app.register_blueprint(sublist3r_bp)
 app.register_blueprint(usage_bp)
 app.register_blueprint(bug_bp)
 app.register_blueprint(result_dp)
+app.register_blueprint(httpcurl)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=7001, debug=True)
