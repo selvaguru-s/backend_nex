@@ -130,7 +130,8 @@ def perform_httpcurl(data, userUID=None):
         # Remove escape sequences from the outputs
         output_body = re.sub(r'\x1b[^m]*m', '', output_body)
         output_headers = re.sub(r'\x1b[^m]*m', '', output_headers)
-
+        print(output_body),
+        print(output_headers)
         # Store the results for both body and headers in the database
         if process.returncode != 0 or process2.returncode != 0:
             logger.error("Curl body or headers command failed")
