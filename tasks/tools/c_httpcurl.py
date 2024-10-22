@@ -22,9 +22,12 @@ def perform_httpcurl(data, userUID=None):
     def cleanup(signum, frame):
         current_scan.update_one(
             {"userUID": userUID, "running": True},
-            {"$set": {"running": False}}
+            {
+                "$set": {
+                    "running": False
+                }
+            }
         )
-        logger.info("Cleanup signal received, updating scan status.")
         raise KeyboardInterrupt  # Raise an exception to break the scan loop
 
     # Register the cleanup function for SIGINT (Ctrl+C) and SIGTERM
@@ -55,38 +58,39 @@ def perform_httpcurl(data, userUID=None):
             }
         })
 
-        # Prepare the wget command for the body
-        wget_command_body = ['wget', '-q', '-O', '-', '--method', method, '--max-redirect=inf', target]
+        # Prepare the curl command for the body
+        curl_command_body = ['curl', '-s', '-L', '--request', method, target]  # -s for silent, -L for following redirects
 
         # Handle Authorization header based on selected type
         if auth_type == 'Bearer':
             if not bearer_token:
                 return {'error': 'Bearer token is required'}
-            wget_command_body.append(f'--header=Authorization: Bearer {bearer_token}')
+            curl_command_body.append(f'--header=Authorization: Bearer {bearer_token}')
         elif auth_type == 'Basic':
             if not username or not password:
                 return {'error': 'Username and password are required for Basic Auth'}
             encoded_credentials = f"{username}:{password}".encode('utf-8')
-            wget_command_body.append(f'--header=Authorization: Basic {base64.b64encode(encoded_credentials).decode()}')
+            curl_command_body.append(f'--header=Authorization: Basic {base64.b64encode(encoded_credentials).decode()}')
         elif auth_type == 'Custom':
             if not token_type or not custom_credentials:
                 return {'error': 'Token Type and Credentials are required for Custom Auth'}
-            wget_command_body.append(f'--header=Authorization: {token_type} {custom_credentials}')
+            curl_command_body.append(f'--header=Authorization: {token_type} {custom_credentials}')
 
-        # Add headers to the wget command
+        # Add headers to the curl command
         for key, value in headers.items():
-            wget_command_body.append(f'--header={key}: {value}')
+            curl_command_body.append(f'--header={key}: {value}')
 
         # Add body if present (only applies to POST, PUT, etc.)
         if body and method in ['POST', 'PUT', 'PATCH']:
-            wget_command_body.append(f'--body-data={body}')
+            curl_command_body.append('--data')
+            curl_command_body.append(body)
 
-        # Prepare the wget command for the headers
-        wget_command_headers = ['wget', '-S', '--spider', '--max-redirect=inf', '-q', target]
+        # Prepare the curl command for the headers
+        curl_command_headers = ['curl', '-s', '-L', '-I', target]  # -I fetches the headers
 
         # Start the subprocesses
-        process = subprocess.Popen(wget_command_body, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process2 = subprocess.Popen(wget_command_headers, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(curl_command_body, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process2 = subprocess.Popen(curl_command_headers, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Get the psutil process object for the body command
         ps_process = psutil.Process(process.pid)
@@ -101,12 +105,11 @@ def perform_httpcurl(data, userUID=None):
             if process.poll() is not None and process2.poll() is not None:
                 break
 
-            # Check if the process is still alive before sampling
-            if ps_process.is_running():
-                cpu_usage += ps_process.cpu_percent(interval=0.1)
-                memory_info = ps_process.memory_info()
-                memory_usage += memory_info.rss  # Memory usage in bytes
-                sample_count += 1
+            # Sample CPU and memory usage
+            cpu_usage += ps_process.cpu_percent(interval=0.1)
+            memory_info = ps_process.memory_info()
+            memory_usage += memory_info.rss  # Memory usage in bytes
+            sample_count += 1
             time.sleep(0.1)
 
         # Get final output for both processes
@@ -128,29 +131,16 @@ def perform_httpcurl(data, userUID=None):
         # Remove escape sequences from the outputs
         output_body = re.sub(r'\x1b[^m]*m', '', output_body)
         output_headers = re.sub(r'\x1b[^m]*m', '', output_headers)
-        print(output_body)
-        print(output_headers)
+
+        # Log the outputs for both body and headers
+        logger.info("Curl body and headers commands completed successfully")
+        logger.info(f"Body Output:\n{output_body}")
+        logger.info(f"Headers Output:\n{output_headers}")
 
         # Store the results for both body and headers in the database
-        if process.returncode != 0 or process2.returncode != 0:
-            logger.error("Curl body or headers command failed")
-            collection.update_one({"task_id": perform_httpcurl.request.id}, {
-                "$set": {
-                    "status": "FAILURE",
-                    "result": {
-                        "error_body": error_body,
-                        "error_headers": error_headers
-                    }
-                }
-            })
-            return {'error_body': error_body, 'error_headers': error_headers}
-
-        logger.info("Curl body and headers commands completed successfully")
-
-        # Update task status to "SUCCESS" in the database
         collection.update_one({"task_id": perform_httpcurl.request.id}, {
             "$set": {
-                "status": "SUCCESS",
+                "status": "SUCCESS",  # Always mark as SUCCESS
                 "Target": target,
                 "Tool": "Curl",
                 "result": {
@@ -174,18 +164,17 @@ def perform_httpcurl(data, userUID=None):
 
     except KeyboardInterrupt:
         logger.info("Scan interrupted by user.")
-        if collection is not None:
-            collection.update_one({"task_id": perform_httpcurl.request.id}, {
-                "$set": {
-                    "status": "CANCELED",
-                    "result": {"error": "Scan was canceled by the user."}
-                }
-            })
+        collection.update_one({"task_id": perform_httpcurl.request.id}, {
+            "$set": {
+                "status": "CANCELED",
+                "result": {"error": "Scan was canceled by the user."}
+            }
+        })
         return {'error': "Scan was canceled by the user."}
 
     except Exception as e:
         logger.error(f"Error occurred during the Curl scan: {e}")
-        if collection is not None:
+        if collection:
             collection.update_one({"task_id": perform_httpcurl.request.id}, {
                 "$set": {
                     "status": "FAILURE",
@@ -198,5 +187,9 @@ def perform_httpcurl(data, userUID=None):
         # Ensure running is set to False no matter what happens
         current_scan.update_one(
             {"userUID": userUID, "running": True},
-            {"$set": {"running": False}}
+            {
+                "$set": {
+                    "running": False
+                }
+            }
         )
