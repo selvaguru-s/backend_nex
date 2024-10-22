@@ -22,7 +22,7 @@ RUN pip3 install --upgrade pip setuptools --break-system-packages
 RUN pip3 install --break-system-packages -r requirements.txt
 
 # Expose the Redis port and the application port
-EXPOSE 7000
+
 EXPOSE 7001
 
 # Copy supervisor configuration
