@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7000:7000"  # Redis port
+      - "7001:7001"  # Application port
+    volumes:
+      - .:/app  # Mount the current directory to /app in the container
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "7000:6379"  # Redis default port
+
