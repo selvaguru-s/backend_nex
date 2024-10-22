@@ -6,8 +6,8 @@ import logging
 import psutil
 import time
 import base64
+from pymongo import MongoClient
 from tasks.celery_app import celery
-from utils.mongo import db
 from utils.user_scan_count import store_user_scancount_in_mongo
 
 # Set up logging
@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 
 @celery.task(name='tasks.tasks.c_httpcurl.perform_httpcurl', queue='httpcurl')
 def perform_httpcurl(data, userUID=None):
+    # Initialize the MongoDB client here
+    mongo_client = MongoClient('your_connection_string')  # Replace with your MongoDB connection string
+    db = mongo_client['your_database_name']  # Replace with your database name
     collection = None
     current_scan = db['currentRunningScan']
 
@@ -59,7 +62,7 @@ def perform_httpcurl(data, userUID=None):
         })
 
         # Prepare the curl command for the body
-        curl_command_body = ['curl', '-s', '-L', '--request', method, target]  # -s for silent, -L for following redirects
+        curl_command_body = ['curl', '-s', '-L', '-X', method, target]  # '-s' for silent mode, '-L' to follow redirects
 
         # Handle Authorization header based on selected type
         if auth_type == 'Bearer':
@@ -82,11 +85,10 @@ def perform_httpcurl(data, userUID=None):
 
         # Add body if present (only applies to POST, PUT, etc.)
         if body and method in ['POST', 'PUT', 'PATCH']:
-            curl_command_body.append('--data')
-            curl_command_body.append(body)
+            curl_command_body.append(f'--data={body}')
 
         # Prepare the curl command for the headers
-        curl_command_headers = ['curl', '-s', '-L', '-I', target]  # -I fetches the headers
+        curl_command_headers = ['curl', '-s', '-I', '-L', target]  # '-I' for headers and '-L' to follow redirects
 
         # Start the subprocesses
         process = subprocess.Popen(curl_command_body, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -131,16 +133,17 @@ def perform_httpcurl(data, userUID=None):
         # Remove escape sequences from the outputs
         output_body = re.sub(r'\x1b[^m]*m', '', output_body)
         output_headers = re.sub(r'\x1b[^m]*m', '', output_headers)
-
-        # Log the outputs for both body and headers
-        logger.info("Curl body and headers commands completed successfully")
-        logger.info(f"Body Output:\n{output_body}")
-        logger.info(f"Headers Output:\n{output_headers}")
+        print(output_body)
+        print(output_headers)
 
         # Store the results for both body and headers in the database
+        # Treat all responses as success for logging purposes
+        logger.info("Curl body and headers commands completed successfully")
+
+        # Update task status to "SUCCESS" in the database
         collection.update_one({"task_id": perform_httpcurl.request.id}, {
             "$set": {
-                "status": "SUCCESS",  # Always mark as SUCCESS
+                "status": "SUCCESS",
                 "Target": target,
                 "Tool": "Curl",
                 "result": {
