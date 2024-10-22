@@ -1,20 +1,30 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "7000:7000"
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "7000:7000"  # Redis port
-      - "7001:7001"  # Application port
-    volumes:
-      - .:/app  # Mount the current directory to /app in the container
+      - "7001:7001"
     depends_on:
       - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=7000
 
-  redis:
-    image: redis:alpine
-    ports:
-      - "7000:6379"  # Redis default port
-
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sudo -E celery -A tasks.celery_app worker -Q scan,basic,sublist3r,whatweb,httpcurl --loglevel=info
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=7000
