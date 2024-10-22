@@ -9,8 +9,7 @@ def make_celery():
             'tasks.tools.c_nmap',
             'tasks.tools.c_networktools',
             'tasks.tools.c_whatweb',
-            'tasks.tools.c_sublist3r',
-            'tasks.tools.c_httpcurl'  # Include the modules where your tasks are located
+            'tasks.tools.c_sublist3r'
         ]
     )
 
@@ -21,7 +20,7 @@ def make_celery():
             'tasks.tools.c_networktools.perform_network_tool': {'queue': 'basic'},
             'tasks.tools.c_sublist3r.perform_sublist3r': {'queue': 'sublist3r'},
             'tasks.tools.c_whatweb.perform_whatweb': {'queue': 'whatweb'},
-            'tasks.tools.c_httpcurl.perform_httpcurl': {'queue': 'httpcurl'},
+           
         }
     )
 
